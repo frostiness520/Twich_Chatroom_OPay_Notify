@@ -1,0 +1,11 @@
+{
+    "targetSettingFile" : "Setting",
+    "Setting" : {
+        "username" : "username",
+        "oath" : "oath:",
+        "channel" : "#channel",
+        "OPayKey" : "OPayKey",
+        "modName" : "modName",
+        "testCommand" : "!testCommand"
+    }
+}
