@@ -6,6 +6,7 @@
         "channel" : "#channel",
         "OPayKey" : "OPayKey",
         "modName" : "modName",
-        "testCommand" : "!testCommand"
+        "testCommand" : "!testCommand",
+		"streamLabsToken" : "streamLabsToken"
     }
 }
