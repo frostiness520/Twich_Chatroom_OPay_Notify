@@ -8,6 +8,7 @@ var OPayObserverStatus = true
 var streamlabsObserverStatus = true
 var handledList = []
 var waitingList = []
+var ignoreCount = 0
 var msgTemplate = '{name} 贊助了{amount}'
 var setting = config[config.targetSettingFile]
 
@@ -36,6 +37,23 @@ Bot.on('message', chatter => {
   if(chatter.username === setting.modName && chatter.message === setting.testCommand) {
     Bot.say(`運行狀態=>OPay:${OPayObserverStatus}, Paypal:${streamlabsObserverStatus}`)
   }
+})
+
+Bot.on('gift', event => {
+    var tier = event.msg_param_sub_plan / 1000   
+    msg = `/me ${event.display_name} 送了一份層級 ${tier} 訂閱給 ${event.msg_param_recipient_display_name} (${event.msg_param_recipient_user_name})！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
+    if(ignoreCount > 0){
+        ignoreCount--
+        return
+    }
+    waitingList.push(msg)
+})
+
+Bot.on('mysterygift', event => {
+    var tier = event.msg_param_sub_plan / 1000
+    ignoreCount = event.msg_param_mass_gift_count
+    msg = `/me ${event.display_name} 送了 ${event.msg_param_mass_gift_count} 份層級 ${tier} 訂閱給社群！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
+    waitingList.push(msg)
 })
 
 //init streamLabs donate list
@@ -72,7 +90,10 @@ function donateCheaker() {
                             temp.name = element.name
                             temp.amount = "TWD " + element.amount
                             temp.msg = element.msg
-                            waitingList.push(temp)
+                            bot_msg = msgTemplate.replace('{name}', temp.name)
+                            bot_msg = bot_msg.replace('{amount}', temp.amount)
+                            bot_msg = "/me " + bot_msg + " " + temp.msg
+                            waitingList.push(bot_msg)
                         }
                     })
                 }
@@ -95,7 +116,10 @@ function donateCheaker() {
                         temp.name = element.donator.name
                         temp.amount = element.currency + element.amount_label.replace('$', ' ')
                         temp.msg = element.message
-                        waitingList.push(temp)
+                        bot_msg = msgTemplate.replace('{name}', temp.name)
+                        bot_msg = bot_msg.replace('{amount}', temp.amount)
+                        bot_msg = "/me " + bot_msg + " " + temp.msg
+                        waitingList.push(bot_msg)
                     }
                 }, this);
                 streamlabsObserverStatus = true
@@ -109,10 +133,7 @@ function donateCheaker() {
 
 function msgSender(){
     if(waitingList.length > 0 && channelJoined){
-        element = waitingList[0]
-        bot_msg = msgTemplate.replace('{name}', element.name)
-        bot_msg = bot_msg.replace('{amount}', element.amount)
-        bot_msg = "/me " + bot_msg + " " + element.msg
+        bot_msg = waitingList[0]
         Bot.say(bot_msg)
         waitingList.splice(0, 1)
     }
