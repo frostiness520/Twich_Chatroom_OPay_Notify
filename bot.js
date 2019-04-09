@@ -18,6 +18,29 @@ const Bot = new TwitchBot({
   channels: [setting.channel]
 })
 
+function getSubTier(subPlan){
+    if(subPlan.indexOf('1000') >= 0){
+        return 1
+    }
+    else if(subPlan.indexOf('2000') >= 0){
+        return 2
+    }
+    else if(subPlan.indexOf('3000') >= 0){
+        return 3
+    }
+    else{
+        return 'prime'
+    }
+}
+
+function pushCheckIgnoreCount(msg){
+    if(ignoreCount > 0){
+        setTimeout(pushCheckIgnoreCount, 1000, msg)
+        return
+    }
+    waitingList.push(msg)
+}
+
 Bot.on('join', channel => {
     console.log(`Joined channel: ${channel}`)
     channelJoined = true
@@ -40,7 +63,7 @@ Bot.on('message', chatter => {
 })
 
 Bot.on('gift', event => {
-    var tier = event.msg_param_sub_plan / 1000   
+    var tier = getSubTier(String(event.msg_param_sub_plan))
     msg = `/me ${event.display_name} 送了一份層級 ${tier} 訂閱給 ${event.msg_param_recipient_display_name} (${event.msg_param_recipient_user_name})！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
     if(ignoreCount > 0){
         ignoreCount--
@@ -49,11 +72,21 @@ Bot.on('gift', event => {
     waitingList.push(msg)
 })
 
-Bot.on('mysterygift', event => {
-    var tier = event.msg_param_sub_plan / 1000
-    ignoreCount = event.msg_param_mass_gift_count
-    msg = `/me ${event.display_name} 送了 ${event.msg_param_mass_gift_count} 份層級 ${tier} 訂閱給社群！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
+Bot.on('continueSub', event => {
+    msg = `/me ${event.display_name} 將繼續使用 ${event.msg_param_sender_name} 贈送的贈禮訂閱!`
     waitingList.push(msg)
+})
+
+Bot.on('subscription', event => {
+    console.log('subscription plan:' + event.msg_param_sub_plan)
+})
+
+Bot.on('mysterygift', event => {
+    var tier = getSubTier(String(event.msg_param_sub_plan))
+    ignoreCount = event.msg_param_mass_gift_count
+    setTimeout(function(){ignoreCount = 0}, 10000)
+    msg = `/me ${event.display_name} 送了 ${event.msg_param_mass_gift_count} 份層級 ${tier} 訂閱給社群！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
+    pushCheckIgnoreCount(msg)
 })
 
 //init streamLabs donate list
