@@ -8,6 +8,7 @@ var OPayObserverStatus = true
 var streamlabsObserverStatus = true
 var handledList = []
 var waitingList = []
+var pmList = []
 var ignoreCount = 0
 var msgTemplate = '{name} 贊助了{amount}'
 var setting = config[config.targetSettingFile]
@@ -64,7 +65,7 @@ Bot.on('message', chatter => {
 
 Bot.on('gift', event => {
     var tier = getSubTier(String(event.msg_param_sub_plan))
-    msg = `/me ${event.display_name} 送了一份層級 ${tier} 訂閱給 ${event.msg_param_recipient_display_name} (${event.msg_param_recipient_user_name})！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
+    msg = `${event.display_name} 送了一份層級 ${tier} 訂閱給 ${event.msg_param_recipient_display_name} (${event.msg_param_recipient_user_name})！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
     if(ignoreCount > 0){
         ignoreCount--
         return
@@ -73,7 +74,7 @@ Bot.on('gift', event => {
 })
 
 Bot.on('continueSub', event => {
-    msg = `/me ${event.display_name} 將繼續使用 ${event.msg_param_sender_name} 贈送的贈禮訂閱!`
+    msg = `${event.display_name} 將繼續使用 ${event.msg_param_sender_name} 贈送的贈禮訂閱!`
     waitingList.push(msg)
 })
 
@@ -85,7 +86,7 @@ Bot.on('mysterygift', event => {
     var tier = getSubTier(String(event.msg_param_sub_plan))
     ignoreCount = event.msg_param_mass_gift_count
     setTimeout(function(){ignoreCount = 0}, 10000)
-    msg = `/me ${event.display_name} 送了 ${event.msg_param_mass_gift_count} 份層級 ${tier} 訂閱給社群！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
+    msg = `${event.display_name} 送了 ${event.msg_param_mass_gift_count} 份層級 ${tier} 訂閱給社群！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
     pushCheckIgnoreCount(msg)
 })
 
@@ -125,8 +126,9 @@ function donateCheaker() {
                             temp.msg = element.msg
                             bot_msg = msgTemplate.replace('{name}', temp.name)
                             bot_msg = bot_msg.replace('{amount}', temp.amount)
-                            bot_msg = "/me " + bot_msg + " " + temp.msg
+                            bot_msg = bot_msg + " " + temp.msg
                             waitingList.push(bot_msg)
+                            pmList.push(bot_msg)
                         }
                     })
                 }
@@ -151,8 +153,9 @@ function donateCheaker() {
                         temp.msg = element.message
                         bot_msg = msgTemplate.replace('{name}', temp.name)
                         bot_msg = bot_msg.replace('{amount}', temp.amount)
-                        bot_msg = "/me " + bot_msg + " " + temp.msg
+                        bot_msg = bot_msg + " " + temp.msg
                         waitingList.push(bot_msg)
+                        pmList.push(bot_msg)
                     }
                 }, this);
                 streamlabsObserverStatus = true
@@ -167,8 +170,15 @@ function donateCheaker() {
 function msgSender(){
     if(waitingList.length > 0 && channelJoined){
         bot_msg = waitingList[0]
-        Bot.say(bot_msg)
+        Bot.say('/me ' + bot_msg)
         waitingList.splice(0, 1)
+        if(pmList.length > 0){
+            setTimeout(function(){
+                bot_msg = pmList[0]
+                Bot.say('/w ' + config.targetSettingFile + ' ' + bot_msg)
+                pmList.splice(0, 1)
+            },1000)
+        }
     }
 }
   
