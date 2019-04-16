@@ -9,6 +9,7 @@ var streamlabsObserverStatus = true
 var handledList = []
 var waitingList = []
 var pmList = []
+var gifteeList = []
 var ignoreCount = 0
 var msgTemplate = '{name} 贊助了{amount}'
 var setting = config[config.targetSettingFile]
@@ -34,11 +35,17 @@ function getSubTier(subPlan){
     }
 }
 
-function pushCheckIgnoreCount(msg){
+function pushCheckIgnoreCount(msg, gifter){
     if(ignoreCount > 0){
-        setTimeout(pushCheckIgnoreCount, 1000, msg)
+        setTimeout(pushCheckIgnoreCount, 1000, msg, gifter)
         return
     }
+    waitingList.push(msg)
+    msg = ''
+    gifteeList.forEach(function(giftee) {
+        msg = msg + giftee + ', '
+    }, this)
+    msg = gifter + ' 對 ' + msg + '說：請問你要加入金魚神教嗎？ (Y/Y)'
     waitingList.push(msg)
 }
 
@@ -67,6 +74,7 @@ Bot.on('gift', event => {
     var tier = getSubTier(String(event.msg_param_sub_plan))
     msg = `${event.display_name} 送了一份層級 ${tier} 訂閱給 ${event.msg_param_recipient_display_name} (${event.msg_param_recipient_user_name})！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
     if(ignoreCount > 0){
+        gifteeList.push(`${event.msg_param_recipient_display_name} (${event.msg_param_recipient_user_name})`)
         ignoreCount--
         return
     }
@@ -83,11 +91,12 @@ Bot.on('subscription', event => {
 })
 
 Bot.on('mysterygift', event => {
+    gifteeList = []
     var tier = getSubTier(String(event.msg_param_sub_plan))
     ignoreCount = event.msg_param_mass_gift_count
     setTimeout(function(){ignoreCount = 0}, 10000)
     msg = `${event.display_name} 送了 ${event.msg_param_mass_gift_count} 份層級 ${tier} 訂閱給社群！他/她已經在本頻道送出了 ${event.msg_param_sender_count} 份贈禮訂閱！`
-    pushCheckIgnoreCount(msg)
+    pushCheckIgnoreCount(msg, event.display_name)
 })
 
 //init streamLabs donate list
