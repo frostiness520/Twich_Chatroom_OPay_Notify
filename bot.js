@@ -45,7 +45,7 @@ function pushCheckIgnoreCount(msg, gifter){
     gifteeList.forEach(function(giftee) {
         msg = msg + giftee + ', '
     }, this)
-    msg = gifter + ' 對 ' + msg + '說：請問你要加入金魚神教嗎？ (Y/Y)'
+    msg = gifter + ' 對 ' + msg + '說：請問你要加入金魚神教嗎？ (Y/y)'
     waitingList.push(msg)
 }
 
