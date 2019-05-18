@@ -1,4 +1,4 @@
-const TwitchBot = require('./twitch-bot')
+const TwitchBot = require('twitch-bot')
 var request = require('request');
 var config = require('./conf.json');
 const Entities = require('html-entities').AllHtmlEntities;
