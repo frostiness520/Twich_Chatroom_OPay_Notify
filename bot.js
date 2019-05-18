@@ -1,4 +1,4 @@
-const TwitchBot = require('twitch-bot')
+const TwitchBot = require('./twitch-bot')
 var request = require('request');
 var config = require('./conf.json');
 const Entities = require('html-entities').AllHtmlEntities;
@@ -13,12 +13,15 @@ var gifteeList = []
 var ignoreCount = 0
 var msgTemplate = '{name} 贊助了{amount}'
 var setting = config[config.targetSettingFile]
+var viewers = 0
 
 const Bot = new TwitchBot({
   username: setting.username,
   oauth: setting.oath,
   channels: [setting.channel]
 })
+
+viewersChecker()
 
 function getSubTier(subPlan){
     if(subPlan.indexOf('1000') >= 0){
@@ -67,6 +70,17 @@ Bot.on('error', err => {
 Bot.on('message', chatter => {
   if(chatter.username === setting.modName && chatter.message === setting.testCommand) {
     Bot.say(`運行狀態=>OPay:${OPayObserverStatus}, Paypal:${streamlabsObserverStatus}`)
+  }
+  else if(chatter.message === '!人數'){
+    let shouldPush = true
+    waitingList.forEach(function(element){
+        if(element.includes('目前聊天室人數')){
+            shouldPush = false
+        }
+    })
+    if(shouldPush){
+        waitingList.push(`目前聊天室人數:${viewers}`)
+    }
   }
 })
 
@@ -190,6 +204,17 @@ function msgSender(){
         }
     }
 }
+
+function viewersChecker(){
+    request.get(
+        'http://tmi.twitch.tv/group/user/vocaljudy/chatters',
+        { json: { key: 'value' } },
+        function (error, response, body) {
+            viewers = body.chatter_count
+        }
+    )
+}
   
 setInterval(donateCheaker, 2000);
 setInterval(msgSender, 2000);
+setInterval(viewersChecker, 30000);
