@@ -94,10 +94,10 @@ Bot.on('message', chatter => {
     })
     if(shouldPush){
         let t = new Date()
-        let y = t.getTime() - 86400000
+        let y = t.getTime() - 3600000
         let yt = new Date(y)
         let s =  (yt.getMonth()+1) + '/' + yt.getDate()
-        waitingList.push(`累積至${s}的現在為止，已實況${hours}小時`)
+        waitingList.push(`累積至${s}的現在為止，已實況了${hours}小時`)
     }    
   }
 })
