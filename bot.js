@@ -1,4 +1,4 @@
-const TwitchBot = require('./twitch-bot')
+const TwitchBot = require('twitch-bot')
 var request = require('request');
 var config = require('./conf.json');
 const puppeteer = require('puppeteer');
@@ -88,12 +88,16 @@ Bot.on('message', chatter => {
   }else if(chatter.message === '!本月時數'){
     let shouldPush = true
     waitingList.forEach(function(element){
-        if(element.includes('本月時數')){
+        if(element.includes('本月已開台')){
             shouldPush = false
         }
     })
     if(shouldPush){
-        waitingList.push(`本月時數${hours}小時`)
+        let t = new Date()
+        let y = t.getTime() - 86400000
+        let yt = new Date(y)
+        let s =  (yt.getMonth()+1) + '/' + yt.getDate()
+        waitingList.push(`截至${s}為止，本月已開台${hours}小時`)
     }    
   }
 })
@@ -230,7 +234,7 @@ function viewersChecker(){
 }
 
 async function queryHours(){
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({args: ['--no-sandbox']});
     const page = await browser.newPage();
     await page.goto('https://twitchtracker.com/vocaljudy/statistics');
     
