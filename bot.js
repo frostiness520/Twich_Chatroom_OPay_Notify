@@ -88,7 +88,7 @@ Bot.on('message', chatter => {
   }else if(chatter.message === '!本月時數'){
     let shouldPush = true
     waitingList.forEach(function(element){
-        if(element.includes('本月已開台')){
+        if(element.includes('已實況')){
             shouldPush = false
         }
     })
@@ -97,7 +97,7 @@ Bot.on('message', chatter => {
         let y = t.getTime() - 86400000
         let yt = new Date(y)
         let s =  (yt.getMonth()+1) + '/' + yt.getDate()
-        waitingList.push(`截至${s}為止，本月已開台${hours}小時`)
+        waitingList.push(`累積至${s}的現在為止，已實況${hours}小時`)
     }    
   }
 })
@@ -250,4 +250,4 @@ async function queryHours(){
 setInterval(donateCheaker, 2000);
 setInterval(msgSender, 2000);
 setInterval(viewersChecker, 30000);
-setInterval(queryHours, 1800000);
+setInterval(queryHours, 600000);
