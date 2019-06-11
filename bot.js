@@ -1,6 +1,8 @@
-const TwitchBot = require('twitch-bot')
+const TwitchBot = require('./twitch-bot')
 var request = require('request');
 var config = require('./conf.json');
+const puppeteer = require('puppeteer');
+const cheerio = require('cheerio');
 const Entities = require('html-entities').AllHtmlEntities;
 const entities = new Entities();
 var channelJoined = false
@@ -14,6 +16,7 @@ var ignoreCount = 0
 var msgTemplate = '{name} 贊助了{amount}'
 var setting = config[config.targetSettingFile]
 var viewers = 0
+var hours = '0'
 
 const Bot = new TwitchBot({
   username: setting.username,
@@ -22,6 +25,7 @@ const Bot = new TwitchBot({
 })
 
 viewersChecker()
+queryHours()
 
 function getSubTier(subPlan){
     if(subPlan.indexOf('1000') >= 0){
@@ -81,6 +85,16 @@ Bot.on('message', chatter => {
     if(shouldPush){
         waitingList.push(`目前聊天室人數:${viewers}`)
     }
+  }else if(chatter.message === '!本月時數'){
+    let shouldPush = true
+    waitingList.forEach(function(element){
+        if(element.includes('本月時數')){
+            shouldPush = false
+        }
+    })
+    if(shouldPush){
+        waitingList.push(`本月時數${hours}小時`)
+    }    
   }
 })
 
@@ -147,7 +161,7 @@ function donateCheaker() {
                             temp.name = element.name
                             temp.amount = "TWD " + element.amount
                             temp.msg = element.msg
-                            bot_msg = msgTemplate.replace('{name}', temp.name)
+                            let bot_msg = msgTemplate.replace('{name}', temp.name)
                             bot_msg = bot_msg.replace('{amount}', temp.amount)
                             bot_msg = bot_msg + " " + temp.msg
                             waitingList.push(bot_msg)
@@ -174,7 +188,7 @@ function donateCheaker() {
                         temp.name = element.donator.name
                         temp.amount = element.currency + element.amount_label.replace('$', ' ')
                         temp.msg = element.message
-                        bot_msg = msgTemplate.replace('{name}', temp.name)
+                        let bot_msg = msgTemplate.replace('{name}', temp.name)
                         bot_msg = bot_msg.replace('{amount}', temp.amount)
                         bot_msg = bot_msg + " " + temp.msg
                         waitingList.push(bot_msg)
@@ -192,7 +206,7 @@ function donateCheaker() {
 
 function msgSender(){
     if(waitingList.length > 0 && channelJoined){
-        bot_msg = waitingList[0]
+        let bot_msg = waitingList[0]
         Bot.say('/me ' + bot_msg)
         waitingList.splice(0, 1)
         if(pmList.length > 0){
@@ -214,7 +228,22 @@ function viewersChecker(){
         }
     )
 }
+
+async function queryHours(){
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto('https://twitchtracker.com/vocaljudy/statistics');
+    
+    let $ = cheerio.load(await page.content())
+    let data = []
+    $('#table-statistics tbody tr').each(function(i, elem) {
+      data.push($(this).text().split('\n'))
+    })
+    hours = data[0][3].replace(' hrs','')
+    await browser.close();
+}
   
 setInterval(donateCheaker, 2000);
 setInterval(msgSender, 2000);
 setInterval(viewersChecker, 30000);
+setInterval(queryHours, 1800000);
