@@ -21,7 +21,7 @@ var title = ''
 
 let options = {
     options: {
-        debug: true
+        debug: false
     },
     connection: {
         reconnect: true,
